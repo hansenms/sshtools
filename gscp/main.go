@@ -6,8 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"golang.org/x/crypto/ssh"
-	//"io"
-	"io/ioutil"
+	"io"
 	"os"
 	"time"
 )
@@ -56,12 +55,10 @@ func main() {
 			// Could not obtain stat, handle error
 		}
 
-		data, _ := ioutil.ReadFile(*f)
-		
 		fmt.Fprintln(w, "D0755", 0, "testdir") // mkdir
 		fmt.Fprintln(w, "C0644", fi.Size(), "testfile1")
 		start := time.Now()
-		w.Write(data)
+		io.Copy(w,file)
 		elapsed := time.Since(start)
 		fmt.Fprint(w, "\x00") // transfer end with \x00
 		fmt.Printf("File size: %d\n", fi.Size());
