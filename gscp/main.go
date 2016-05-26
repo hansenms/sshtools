@@ -8,6 +8,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	"io"
 	"os"
+	"time"
 )
 
 func main() {
@@ -38,6 +39,7 @@ func main() {
 	}
 	defer session.Close()
 	go func() {
+		
 		w, _ := session.StdinPipe()
 		defer w.Close()
 		
@@ -55,8 +57,13 @@ func main() {
 
 		fmt.Fprintln(w, "D0755", 0, "testdir") // mkdir
 		fmt.Fprintln(w, "C0644", fi.Size(), "testfile1")
-		io.Copy(w, file);
+		start := time.Now()
+		io.Copy(w, file)
+		elapsed := time.Since(start)
 		fmt.Fprint(w, "\x00") // transfer end with \x00
+		fmt.Printf("File size: %d\n", fi.Size());
+		fmt.Printf("Transfer time: %s\n", elapsed);
+		fmt.Printf("Transfer rate %f MB/s\n", (float64(fi.Size())/(1024.0*1024.0))/elapsed.Seconds())
 	}()
 	if err := session.Run("/usr/bin/scp -tr ./"); err != nil {
 		panic("Failed to run: " + err.Error())
