@@ -10,12 +10,13 @@ import (
 	"io"
 	"os"
 	"strings"
+	"syscall"
 	"time"
 )
 
 func getpassword() (string, error) {
 	fmt.Print("password: ")
-	bytePassword, err := terminal.ReadPassword(0)
+	bytePassword, err := terminal.ReadPassword(syscall.Stdin)
 	if err != nil {
 		panic(err)
 	}
