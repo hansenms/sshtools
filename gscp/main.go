@@ -6,14 +6,25 @@ import (
 	"flag"
 	"fmt"
 	"golang.org/x/crypto/ssh"
+	"golang.org/x/crypto/ssh/terminal"
 	"io"
 	"os"
+	"strings"
 	"time"
 )
 
+func getpassword() (string, error) {
+	fmt.Print("password: ")
+	bytePassword, err := terminal.ReadPassword(0)
+	if err != nil {
+		panic(err)
+	}
+	password := string(bytePassword)
+	return strings.TrimSpace(password), err
+}
+
 func main() {
 	var u =  flag.String("user", "", "Username")
-	var pw = flag.String("password", "", "Password")
 	var f  = flag.String("file", "", "File to copy")
 	var h = flag.String("host", "", "Host name")
 	flag.Parse()
@@ -21,7 +32,7 @@ func main() {
 	clientConfig := &ssh.ClientConfig{
 		User: *u,
 		Auth: []ssh.AuthMethod{
-			ssh.Password(*pw),
+			ssh.PasswordCallback(getpassword),
 		},
 	}
 
@@ -52,7 +63,7 @@ func main() {
 
 		fi, err := file.Stat()
 		if err != nil {
-			// Could not obtain stat, handle error
+			panic(err)
 		}
 
 		fmt.Fprintln(w, "D0755", 0, "testdir") // mkdir
@@ -61,7 +72,7 @@ func main() {
 		io.Copy(w,file)
 		elapsed := time.Since(start)
 		fmt.Fprint(w, "\x00") // transfer end with \x00
-		fmt.Printf("File size: %d\n", fi.Size());
+		fmt.Printf("\nFile size: %d\n", fi.Size());
 		fmt.Printf("Transfer time: %s\n", elapsed);
 		fmt.Printf("Transfer rate %f MB/s\n", (float64(fi.Size())/(1024.0*1024.0))/elapsed.Seconds())
 	}()
